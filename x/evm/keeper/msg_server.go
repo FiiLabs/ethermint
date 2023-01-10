@@ -28,7 +28,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 	tx := msg.AsTransaction()
 	txIndex := k.GetTxIndexTransient(ctx)
 
-	response, err := k.ApplyTransaction(ctx, tx)
+	response, err := k.getEthereumTxResponseForMetaos(ctx, sender, tx)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "failed to apply transaction")
 	}

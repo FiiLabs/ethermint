@@ -413,6 +413,7 @@ func (e *EVMBackend) EthBlockFromTendermint(
 	req := &evmtypes.QueryValidatorAccountRequest{
 		ConsAddress: sdk.ConsAddress(block.Header.ProposerAddress).String(),
 	}
+	var validatorAccAddr sdk.AccAddress
 
 	res, err := e.queryClient.ValidatorAccount(ctx, req)
 	if err != nil {
@@ -422,15 +423,16 @@ func (e *EVMBackend) EthBlockFromTendermint(
 			"cons-address", req.ConsAddress,
 			"error", err.Error(),
 		)
-		return nil, err
+		// use zero address as the validator operator address
+		validatorAccAddr = sdk.AccAddress(common.Address{}.Bytes())
+	} else {
+		validatorAccAddr, err = sdk.AccAddressFromBech32(res.AccountAddress)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	addr, err := sdk.AccAddressFromBech32(res.AccountAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	validatorAddr := common.BytesToAddress(addr)
+	validatorAddr := common.BytesToAddress(validatorAccAddr)
 
 	gasLimit, err := types.BlockMaxGasFromConsensusParams(ctx, e.clientCtx, block.Height)
 	if err != nil {
@@ -993,10 +995,20 @@ func (e *EVMBackend) BaseFee(height int64) (*big.Int, error) {
 	}
 
 	// Checks the feemarket param NoBaseFee settings, return 0 if it is enabled.
-	resParams, err := e.queryClient.FeeMarket.Params(types.ContextWithHeight(height), &feemarkettypes.QueryParamsRequest{})
-	if err != nil {
-		return nil, err
-	}
+	//resParams, err := e.queryClient.FeeMarket.Params(types.ContextWithHeight(height), &feemarkettypes.QueryParamsRequest{})
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	resParams := new(feemarkettypes.QueryParamsResponse)
+
+	resParams.Params = feemarkettypes.NewParams(
+		true,
+		params.BaseFeeChangeDenominator,
+		params.ElasticityMultiplier,
+		params.InitialBaseFee,
+		0,
+	)
 
 	if resParams.Params.NoBaseFee {
 		return big.NewInt(0), nil

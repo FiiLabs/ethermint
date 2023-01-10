@@ -212,6 +212,10 @@ func (e *PublicAPI) GasPrice() (*hexutil.Big, error) {
 		result = big.NewInt(e.backend.RPCMinGasPrice())
 	}
 
+	if result.Cmp(new(big.Int).SetUint64(0)) == 0 {
+		result = big.NewInt(e.backend.RPCMinGasPrice())
+	}
+
 	return (*hexutil.Big)(result), nil
 }
 
@@ -527,6 +531,10 @@ func (e *PublicAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) 
 	if err != nil {
 		e.logger.Error("failed to build cosmos tx", "error", err.Error())
 		return common.Hash{}, err
+	}
+
+	if cosmosTx.GetGas() > e.backend.RPCGasCap() {
+		return common.Hash{}, fmt.Errorf("failed to gas limit exceeded")
 	}
 
 	// Encode transaction by default Tx encoder

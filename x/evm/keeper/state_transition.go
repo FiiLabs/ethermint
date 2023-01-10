@@ -78,7 +78,8 @@ func (k *Keeper) NewEVM(
 ) *vm.EVM {
 	blockCtx := vm.BlockContext{
 		CanTransfer: core.CanTransfer,
-		Transfer:    core.Transfer,
+		//Transfer:    core.Transfer,
+		Transfer:    k.Transfer,
 		GetHash:     k.GetHashFn(ctx),
 		Coinbase:    cfg.CoinBase,
 		GasLimit:    ethermint.BlockGasLimit(ctx),

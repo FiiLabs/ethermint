@@ -26,6 +26,16 @@ func (s sortGasAndReward) Swap(i, j int) {
 }
 
 func (s sortGasAndReward) Less(i, j int) bool {
+
+	//   -1 if x <  y
+	//    0 if x == y
+	//   +1 if x >  y
+	if s[i].reward == nil {
+		return true
+	}
+	if s[j].reward == nil {
+		return false
+	}
 	return s[i].reward.Cmp(s[j].reward) < 0
 }
 
@@ -87,6 +97,7 @@ func (e *EVMBackend) processBlock(
 			}
 			tx := ethMsg.AsTransaction()
 			reward := tx.EffectiveGasTipValue(blockBaseFee)
+
 			sorter[i] = txGasAndReward{gasUsed: txGasUsed, reward: reward}
 			break
 		}
